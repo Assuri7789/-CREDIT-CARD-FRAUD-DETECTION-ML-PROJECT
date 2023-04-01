@@ -1,0 +1,108 @@
+import numpy as np 
+import pandas as pd
+#import tensorflow as tf
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA, TruncatedSVD
+import matplotlib.patches as mpatches
+import time
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import precision_score
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+import collections
+
+
+df = pd.read_csv("C:\\Users\\Dell\\udacity-git-course\\ML PROJECT\\creditcard.csv")
+df.head()
+
+from sklearn.preprocessing import StandardScaler, RobustScaler
+
+std_scaler = StandardScaler()
+rob_scaler = RobustScaler()
+
+df['scaled_amount'] = rob_scaler.fit_transform(df['Amount'].values.reshape(-1,1))
+df['scaled_time'] = rob_scaler.fit_transform(df['Time'].values.reshape(-1,1))
+
+df.drop(['Time','Amount'], axis=1, inplace=True)
+
+scaled_amount = df['scaled_amount']
+scaled_time = df['scaled_time']
+
+df.drop(['scaled_amount', 'scaled_time'], axis=1, inplace=True)
+df.insert(0, 'scaled_amount', scaled_amount)
+df.insert(1, 'scaled_time', scaled_time)
+
+# Amount and Time are Scaled!
+df.head()
+
+target = 'Class'
+predictors = ['V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10','V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17', 'V18', 'V19','V20', 'V21', 'V22', 'V23', 'V24', 'V25', 'V26', 'V27', 'V28','scaled_time', 'scaled_amount']
+
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, shuffle=True )
+train_df, valid_df = train_test_split(train_df, test_size=0.25, random_state=42, shuffle=True )
+
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+# create and train a Gaussian Naive Bayes classifier
+nb = GaussianNB()
+nb.fit(train_df[predictors], train_df[target])
+preds3 = nb.predict(valid_df[predictors])
+
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+
+# assuming clf is your trained random forest classifier
+preds3 = nb.predict(valid_df[predictors])
+labels = valid_df[target]
+
+# compute confusion matrix
+cm = confusion_matrix(labels, preds3)
+
+# compute classification report
+cr = classification_report(labels, preds3)
+
+# compute accuracy score
+acc = accuracy_score(labels, preds3)
+
+# compute precision score
+precision = precision_score(labels, preds3)
+
+# compute recall score
+recall = recall_score(labels, preds3)
+
+# compute F1-score
+f1 = f1_score(labels, preds3)
+
+# print confusion matrix, classification report, and performance metrics
+print("Confusion matrix:\n", cm)
+print("Classification report:\n", cr)
+print("Accuracy:", acc)
+print("Precision:", precision)
+print("Recall:", recall)
+print("F1-score:", f1)
+
+
+area4 = roc_auc_score(valid_df[target].values, preds3)
+print("ROC_AUC:", area4)
+
+
+import pandas as pd
+
+# Create the submission DataFrame
+submission = pd.DataFrame({'Index': valid_df.index, 'Predictions': preds3})
+
+# Export the DataFrame to a CSV file
+submission.to_csv('submission.csv', index=False)
+
+
+df1 = pd.read_csv('C://Users//Dell//udacity-git-course//ML PROJECT//submission.csv')
+submission = pd.DataFrame({'id': list(range(1, len(df1['Index']) + 1)), 'Index': valid_df.index, 'Predictions': preds3})
+# Export the DataFrame to a CSV file
+submission.to_csv('submission.csv', index=False)
+df1.head()
